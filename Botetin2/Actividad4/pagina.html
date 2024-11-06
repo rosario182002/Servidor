@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Horas de Vuelo</title>
+</head>
+<body>
+    <h1>Control de Horas de Vuelo de Pilotos</h1>
+
+    <!-- Formulario para ingresar las horas a añadir -->
+    <form method="POST" action="ejercicio4.php">
+        <label for="horasVuelo">Horas de vuelo a añadir:</label>
+        <input type="number" id="horasVuelo" name="horasVuelo" min="1" required>
+        <button type="submit">Añadir horas</button>
+    </form>
+
+    <p><strong>Horas totales actuales:</strong> 50 horas</p>
+    <p><strong>Máximo permitido:</strong> 100 horas</p>
+</body>
+</html>

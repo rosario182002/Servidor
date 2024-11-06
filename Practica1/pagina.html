@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inserción de Cerveza</title>
+    <link href="./estilos/estilos.css" rel="stylesheet" />
+</head>
+<body>
+   
+    <h1>Inserción de Cervezas</h1>
+    
+    <div class="formulario-cuadrado">
+        <form method="POST" action="datos.php">
+            <p>Introduzca los datos de las Cervezas: </p>
+            
+            <p><label>Tipos de cervezas: </label>
+            <select name="tipoCerveza" id="tipoCerveza">
+                <option value="lager">Lager</option>
+                <option value="paleLarge">Pale Lager</option>
+                <option value="marzenBlock">Marzen Block</option>
+                <option value="AmericanLager">American Larger</option>
+                <option value="Ale">Ale</option>
+                <option value="PaleAle">Pale Ale</option>
+                <option value="IPA">IPA</option>
+                <option value="Bitter">Bitter</option>
+                <option value="BrownAle">Brown Ale</option>
+                <option value="Poter">Poter</option>
+                <option value="Stout">Stout</option>
+                <option value="Traspenses">Traspenses</option>
+                <option value="Abadia">Abadia</option>
+                <option value="WeisBier">WeisBier</option>
+                <option value="Witbier">Witbier</option>
+            </select></p>
+            <br />
+
+            <p><label>Denominación del alimento: </label>
+            <select name="DenominacionAlimento" id="DenominacionAlimento">
+                <option value="botellin">Botellin</option>
+                <option value="tercio">Tercio</option>
+                <option value="½Litro">½ Litro</option>
+                <option value="1Litro">1 Litro</option>
+                <option value="Lata">Lata</option>
+            </select></p>
+            <br />
+
+            <p><label>Tipo Embase: </label>
+                <input type="radio" name="TipoEmbase" value="Botellin">Botellin
+                <input type="radio" name="TipoEmbase" value="Tercio">Tercio
+                <input type="radio" name="TipoEmbase" value="½ Litro">½ Litro
+                <input type="radio" name="TipoEmbase" value="Litro">Litro
+                <input type="radio" name="TipoEmbase" value="Lata">Lata
+            </p>
+            <br />
+
+            <p><label>Cantidad Neta: </label>
+            <select name="CantidadNeta" id="CantidadNeta">
+                <option value="25cl">25cl</option>
+                <option value="33cl">33cl</option>
+                <option value="1Litro">1 Litro</option>
+                <option value="½Litro">½ Litro</option>
+                <option value="2Litros">2 Litros</option>
+                <option value="Barril25Litros">Barril 25 Litros</option>
+            </select></p>
+            <br />
+
+            <P><LABEL>Marca del Producto:</LABEL>
+                <input type="text" name="texto">
+            </P>
+            <br />
+
+            <P><LABEL>Advertencia sobre el abuso en el consumo de Alcohol:</LABEL>
+                <input type="text" name="texto1">
+            </P>
+            <br />
+
+            <P><LABEL>Fecha Consumo Preferente:</LABEL>
+                <input type="date" name="fecha">
+            </P>
+            <br />
+
+            <p><label>Indicar sustancias que pueden causar alergias:</label>
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Gluten">Gluten
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Huevo">Huevo
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Cacahuete">Cacahuete
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Soja">Soja
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Lacteo">Lacteo
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Sulfitos">Sulfitos
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Frutos con Cascara">Frutos Con Cascara
+                <input TYPE="checkbox" NAME="alergenos[]" VALUE="Sin alergenos">Sin Alergenos
+            </p>
+            <br />
+
+            <!--Insertar -->
+            <form action="subirfichero.php" method="post" enctype="multipart/form-data">
+                Fichero: <input type="file" name="fichero" />
+                <BR />
+
+                <P><LABEL>Observaciones:</LABEL>
+                    <TEXTAREA NAME="observaciones" COLS="50" ROWS="5"></TEXTAREA>
+                </P>
+                <br />
+
+                <p><input TYPE="submit" NAME="Enviar" VALUE="Enviar"></p>
+            </form>
+        </form>
+    </div>
+        
+
+  </body>
+</html>

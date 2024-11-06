@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingresar Números</title>
+</head>
+<body>
+    <h1>Programa de Análisis de Números</h1>
+    <p>Ingresa un número a la vez. Se pedirán un total de 6 números.</p>
+    <form action="ejercicio5.php" method="POST">
+        <input type="hidden" name="count" value="1">
+        <input type="hidden" name="numbers" value="">
+        <label for="number">Número 1:</label>
+        <input type="number" name="number" required>
+        <button type="submit">Enviar</button>
+    </form>
+</body>
+</html>
