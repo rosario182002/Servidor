@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agenda PHP</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <h1>Agenda</h1>
+
+    <!-- Contenido de la agenda, cargado desde agenda.php -->
+    <div class="agenda">
+        <?php include 'agenda.php'; ?>
+    </div>
+
+    <!-- Formulario para añadir/actualizar/eliminar contactos -->
+    <div class="formulario">
+        <form method="post" action="codigo.php">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required>
+
+            <label for="telefono">Teléfono:</label>
+            <input type="text" id="telefono" name="telefono">
+
+            <button type="submit">Guardar</button>
+        </form>
+    </div>
+</body>
+</html>
