@@ -12,17 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $contraseña = $_POST['contraseña'];
     $confirmar_contraseña = $_POST['confirmar_contraseña'];
 
-    // Verificar si las contraseñas coinciden
-    if ($contraseña != $confirmar_contraseña) {
+     // Verificar si las contraseñas coinciden
+     if ($contraseña != $confirmar_contraseña) {
         $_SESSION['error'] = "Las contraseñas no coinciden.";
     } else {
-        // Hashear la contraseña para mayor seguridad
-        $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
-
-        // Insertar los datos en la base de datos
+        // Insertar los datos en la base de datos sin encriptar la contraseña
         try {
             $stmt = $conn->prepare("INSERT INTO usuario (nombre_usuario, correo, password) VALUES (?, ?, ?)");
-            $stmt->execute([$nombre_usuario, $email, $contraseña_hash]);
+            $stmt->execute([$nombre_usuario, $email, $contraseña]);
         
             $_SESSION['success'] = "Registro exitoso. ¡Puedes iniciar sesión ahora!";
             header("Location: login.php"); // Redirigir al login después de un registro exitoso
@@ -30,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } catch (PDOException $e) {
             $_SESSION['error'] = "Error al registrar el usuario: " . $e->getMessage();
         }
-        
     }
 }
 ?>

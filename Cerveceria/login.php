@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 include 'conexion.php';
@@ -9,36 +8,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
 
     // Escapar las entradas para evitar inyección SQL
-$correo = mysqli_real_escape_string($conn, $correo);
-$password = mysqli_real_escape_string($conn, $password);
+    $correo = mysqli_real_escape_string($conn, $correo);
+    
+    // Realizar la consulta
+    $query = "SELECT * FROM usuario WHERE correo = '$correo'";
+    $resultado = mysqli_query($conn, $query);
 
-// Realizar la consulta
-$query = "SELECT * FROM usuario WHERE correo = $correo";
-$resultado = mysqli_query($conn, $query);
-echo $resultado;
+    // Verificar si el usuario existe
+    if ($fila = mysqli_fetch_assoc($resultado)) {
+        // Comparar directamente las contraseñas (sin encriptar)
+        if ($password === $fila['password']) {
+            // Guardar datos en sesión
+            $_SESSION['user_id'] = $fila['id_usuario'];
+            $_SESSION['perfil'] = $fila['perfil']; 
 
-// Verificar si el usuario existe
-if ($fila = mysqli_fetch_assoc($resultado)) {
-    // Verificar la contraseña
-    if (password_verify($password, $fila['password'])) {
-        session_start();
-        $_SESSION['user_id'] = $fila['id_usuario'];
-        $_SESSION['perfil'] = $fila['perfil'];
-
-        // Redirigir según el perfil
-        if ($fila['perfil'] === 'admin') {
-            header('Location: productos.php');
+            // Redirigir según el perfil
+            if ($fila['perfil'] === 'admin') {
+                header('Location: productos.php');
+                exit();
+            } else {
+                header('Location: carrito.php');
+                exit();
+            }
         } else {
-            header('Location: carrito.php');
+            $error = "Correo o contraseña incorrectos.";
         }
-        exit();
     } else {
         $error = "Correo o contraseña incorrectos.";
     }
-} else {
-    $error = "Correo o contraseña incorrectos.";
-}
-mysqli_close($conn);
+    mysqli_close($conn);
 }
 ?>
 <!DOCTYPE html>
