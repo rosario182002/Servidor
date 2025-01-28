@@ -13,9 +13,8 @@ $correo = mysqli_real_escape_string($conn, $correo);
 $password = mysqli_real_escape_string($conn, $password);
 
 // Realizar la consulta
-$query = "SELECT * FROM usuario WHERE correo = $correo";
+$query = "SELECT * FROM usuario WHERE correo = '$correo'";
 $resultado = mysqli_query($conn, $query);
-echo $resultado;
 
 // Verificar si el usuario existe
 if ($fila = mysqli_fetch_assoc($resultado)) {
