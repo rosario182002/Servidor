@@ -42,7 +42,7 @@ $conn = mysqli_connect($servidor, $usuario, $password, $base_datos);
         $error = "Correo o contraseña incorrectos.";
     }
     mysqli_close($conn);
-}
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

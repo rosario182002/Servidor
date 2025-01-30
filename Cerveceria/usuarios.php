@@ -19,18 +19,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $perfil = $_POST['perfil'];
 
             if (!empty($correo) && !empty($password) && !empty($edad) && !empty($perfil)) {
-                $stmt = $pdo->prepare("INSERT INTO usuario (CORREO, PASSWORD, EDAD, PERFIL) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$correo, $password, $edad, $perfil]);
-                $success = "Usuario agregado con éxito.";
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO usuario (CORREO, PASSWORD, EDAD, PERFIL) VALUES (?, ?, ?, ?)");
+                    $stmt->execute([$correo, $password, $edad, $perfil]);
+                    $success = "Usuario agregado con éxito.";
+                } catch (PDOException $e) {
+                    $error = "Error al agregar usuario: " . $e->getMessage();
+                }
             } else {
                 $error = "Todos los campos son obligatorios.";
             }
         } elseif ($_POST['action'] === 'delete') {
             // Eliminar usuario
             $id = $_POST['id'];
-            $stmt = $pdo->prepare("DELETE FROM usuario WHERE ID_USUARIO = ?");
-            $stmt->execute([$id]);
-            $success = "Usuario eliminado con éxito.";
+            try {
+                $stmt = $pdo->prepare("DELETE FROM usuario WHERE ID_USUARIO = ?");
+                $stmt->execute([$id]);
+                $success = "Usuario eliminado con éxito.";
+            } catch (PDOException $e) {
+                $error = "Error al eliminar usuario: " . $e->getMessage();
+            }
         }
     }
 }
@@ -64,13 +72,13 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </tr>
             <?php foreach ($usuarios as $usuario): ?>
                 <tr>
-                    <td><?= $usuario['ID_USUARIO'] ?></td>
-                    <td><?= $usuario['CORREO'] ?></td>
-                    <td><?= $usuario['EDAD'] ?></td>
-                    <td><?= $usuario['PERFIL'] ?></td>
+                    <td><?= htmlspecialchars($usuario['ID_USUARIO']) ?></td>
+                    <td><?= htmlspecialchars($usuario['CORREO']) ?></td>
+                    <td><?= htmlspecialchars($usuario['EDAD']) ?></td>
+                    <td><?= htmlspecialchars($usuario['PERFIL']) ?></td>
                     <td>
                         <form method="POST" action="usuarios.php">
-                            <input type="hidden" name="id" value="<?= $usuario['ID_USUARIO'] ?>">
+                            <input type="hidden" name="id" value="<?= htmlspecialchars($usuario['ID_USUARIO']) ?>">
                             <button type="submit" name="action" value="delete">Eliminar</button>
                         </form>
                     </td>

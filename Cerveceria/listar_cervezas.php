@@ -1,9 +1,14 @@
 <?php
 session_start();
-require_once 'conexion.php'; // Archivo donde conectas tu base de datos
+require_once 'conexion.php'; 
 
-// Verificar si el usuario está logueado y si es administrador
-if (!isset($_SESSION['usuario']) || $_SESSION['rol'] !== 'admin') {
+// Verificar conexión a la base de datos
+if (!$conn) {
+    die("Error de conexión a la base de datos: " . mysqli_connect_error());
+}
+
+// Verificar si el usuario está logueado y tiene rol de admin
+if (!isset($_SESSION['usuario']) || !isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
@@ -15,8 +20,8 @@ $result = $conn->query($sql);
 if (!$result) {
     die("Error al realizar la consulta: " . $conn->error);
 }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,7 +34,7 @@ if (!$result) {
     <h1>Listado de Cervezas (Administrador)</h1>
     <a href="logout.php">Cerrar Sesión</a> <!-- Enlace para cerrar sesión -->
     
-    <table border="1">
+    <table border="1" class="table">
         <thead>
             <tr>
                 <th>ID</th>
@@ -44,6 +49,7 @@ if (!$result) {
         </thead>
         <tbody>
             <?php while ($fila = $result->fetch_assoc()): ?>
+                <?php $imagen = !empty($fila['foto']) ? "imagenes/" . htmlspecialchars($fila['foto']) : "imagenes/default.jpg"; ?>
                 <tr>
                     <td><?= htmlspecialchars($fila['id']); ?></td>
                     <td><?= htmlspecialchars($fila['denominacion']); ?></td>
@@ -52,12 +58,12 @@ if (!$result) {
                     <td><?= htmlspecialchars($fila['formato']); ?></td>
                     <td><?= htmlspecialchars($fila['tamano']); ?></td>
                     <td>
-                        <img src="imagenes/<?= htmlspecialchars($fila['foto']); ?>" alt="Imagen de <?= htmlspecialchars($fila['marca']); ?>" width="100">
+                        <img src="<?= $imagen ?>" alt="Imagen de <?= htmlspecialchars($fila['marca']); ?>" width="100">
                     </td>
                     <td>
-                        <a href="verCerveza.php?id=<?= $fila['id']; ?>">Ver más</a>
-                        <a href="editarCerveza.php?id=<?= $fila['id']; ?>">Modificar</a>
-                        <a href="eliminarCerveza.php?id=<?= $fila['id']; ?>" onclick="return confirm('¿Estás seguro de eliminar esta cerveza?');">Eliminar</a>
+                        <a href="verCerveza.php?id=<?= htmlspecialchars($fila['id']); ?>">Ver más</a>
+                        <a href="editarCerveza.php?id=<?= htmlspecialchars($fila['id']); ?>">Modificar</a>
+                        <a href="eliminarCerveza.php?id=<?= htmlspecialchars($fila['id']); ?>" onclick="return confirm('¿Estás seguro de eliminar esta cerveza?');">Eliminar</a>
                     </td>
                 </tr>
             <?php endwhile; ?>
@@ -67,5 +73,5 @@ if (!$result) {
 </html>
 
 <?php
-$conn->close(); // Cerrar conexión a la base de datos
+$conn->close();
 ?>

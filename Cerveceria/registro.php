@@ -2,7 +2,7 @@
 // Iniciar sesión para manejar posibles mensajes de error o éxito
 session_start();
 
-// Incluir la conexión a la base de datos
+// Incluir la conexión a la base de datos (asegúrate de que 'conexion.php' esté configurado para PDO)
 include('conexion.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -12,20 +12,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $contraseña = $_POST['contraseña'];
     $confirmar_contraseña = $_POST['confirmar_contraseña'];
 
-     // Verificar si las contraseñas coinciden
-     if ($contraseña != $confirmar_contraseña) {
+    // Verificar si las contraseñas coinciden
+    if ($contraseña != $confirmar_contraseña) {
         $_SESSION['error'] = "Las contraseñas no coinciden.";
     } else {
-        // Insertar los datos en la base de datos sin encriptar la contraseña
-        try {
-            $stmt = $conn->prepare("INSERT INTO usuario (nombre_usuario, correo, password) VALUES (?, ?, ?)");
-            $stmt->execute([$nombre_usuario, $email, $contraseña]);
+        // Verificar si el usuario o correo ya están registrados
+        // Uso correcto de PDO para preparar y ejecutar la consulta
+        $stmt = $conn->prepare("SELECT COUNT(*) AS cuenta FROM usuario WHERE nombre_usuario = :nombre_usuario OR correo = :correo");
+        $stmt->bindParam(':nombre_usuario', $nombre_usuario);
+        $stmt->bindParam(':correo', $email);
+        $stmt->execute();
         
-            $_SESSION['success'] = "Registro exitoso. ¡Puedes iniciar sesión ahora!";
-            header("Location: login.php"); // Redirigir al login después de un registro exitoso
-            exit();
-        } catch (PDOException $e) {
-            $_SESSION['error'] = "Error al registrar el usuario: " . $e->getMessage();
+        // Usamos fetch para obtener el resultado y acceder a la columna 'cuenta'
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($resultado['cuenta'] > 0) {
+            $_SESSION['error'] = "El nombre de usuario o correo electrónico ya están registrados.";
+        } else {
+            // Encriptar la contraseña con password_hash()
+            $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+
+            try {
+                // Insertar los datos en la base de datos
+                $stmt = $conn->prepare("INSERT INTO usuario (nombre_usuario, correo, password) VALUES (:nombre_usuario, :correo, :password)");
+                $stmt->bindParam(':nombre_usuario', $nombre_usuario);
+                $stmt->bindParam(':correo', $email);
+                $stmt->bindParam(':password', $contraseña_hash);
+                $stmt->execute();
+                
+                $_SESSION['success'] = "Registro exitoso. ¡Puedes iniciar sesión ahora!";
+                header("Location: login.php"); // Redirigir al login después de un registro exitoso
+                exit();
+            } catch (PDOException $e) {
+                $_SESSION['error'] = "Error al registrar el usuario: " . $e->getMessage();
+            }
         }
     }
 }

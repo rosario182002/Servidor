@@ -1,34 +1,39 @@
 <?php
-// $host = "localhost";      // Dirección del servidor MySQL (localhost si es local)
-// $dbname = "cerveceria";    // Cambia por el nombre de tu base de datos
-// $user = "root";           // Usuario de MySQL (por defecto es root)
-// $pass = "";               // Contraseña de MySQL (en blanco si es local)
-
-//abrimos bbdd
-$conn = mysqli_connect ("localhost:3308","root","","cerveceria");
-// Check connection
-if (mysqli_connect_errno()) {
-    echo "Failed to connect to MySQL: " . mysqli_connect_error();
-    exit();
+// Verificar si ya se ha iniciado una sesión antes de llamar a session_start()
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
 }
-if (isset($_POST['btnA'])) {//si le damos al botón de acceder
-    //cojemos los valores de todos nuestros campos
-    $email = $_POST['email'];
-    $password = $_POST['password'];
 
-     //comprobamos si existe en la bbdd
-     function existe($email){
-        global $conn;
-        $sql = "SELECT correo FROM usuarios WHERE correo = '$email'";
-        $existe = mysqli_query($conn, $sql);
-        return mysqli_num_rows($existe) > 0;
+// Conectar a la base de datos (con el puerto correcto)
+$conn = mysqli_connect("localhost", "root", "", "cerveceria", 3308);
+
+// Verificar la conexión
+if (!$conn) {
+    die("Error de conexión a MySQL: " . mysqli_connect_error());
+}
+
+// Función para comprobar si el correo ya existe en la base de datos
+function existe($email) {
+    global $conn;
+    $sql = "SELECT correo FROM usuarios WHERE correo = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "s", $email);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_store_result($stmt);
+    $existe = mysqli_stmt_num_rows($stmt) > 0;
+    mysqli_stmt_close($stmt);
+    return $existe;
+}
+
+// Si se presiona el botón de acceso
+if (isset($_POST['btnA'])) {
+    // Sanitizar el email ingresado
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+
+    if (existe($email)) {
+        echo "El correo ya está registrado.";
+    } else {
+        echo "El correo no existe en la base de datos.";
     }
 }
-/*try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    echo "Conexión exitosa"; // Mensaje para probar conexión
-} catch (PDOException $e) {
-    die("Error al conectar: " . $e->getMessage());
-}
-    */?>
+?>

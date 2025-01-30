@@ -2,35 +2,44 @@
 session_start();
 require_once 'conexion.php';
 
-if (!isset($_SESSION['usuario']) || $_SESSION['rol'] !== 'admin') {
+// Verificar conexión a la base de datos
+if (!$conn) {
+    die("Error de conexión a la base de datos: " . mysqli_connect_error());
+}
+
+// Verificar si el usuario es administrador
+if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
 
-if (!isset($_GET['id'])) {
-    die("ID de cerveza no proporcionado.");
+// Verificar si el ID es válido
+$id = filter_var($_GET['id'], FILTER_VALIDATE_INT);
+if (!$id) {
+    die("ID de cerveza no válido.");
 }
 
-$id = intval($_GET['id']);
+// Procesar formulario de edición
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $denominacion = $_POST['denominacion'];
-    $marca = $_POST['marca'];
-    $tipo = $_POST['tipo'];
-    $formato = $_POST['formato'];
-    $tamano = $_POST['tamano'];
+    $denominacion = htmlspecialchars($_POST['denominacion']);
+    $marca = htmlspecialchars($_POST['marca']);
+    $tipo = htmlspecialchars($_POST['tipo']);
+    $formato = htmlspecialchars($_POST['formato']);
+    $tamano = htmlspecialchars($_POST['tamano']);
 
     $sql = "UPDATE cervezas SET denominacion = ?, marca = ?, tipo = ?, formato = ?, tamano = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sssssi", $denominacion, $marca, $tipo, $formato, $tamano, $id);
 
     if ($stmt->execute()) {
-        header("Location: listar_cervezas.php");
-        exit();
+        echo "<p style='color:green;'>Cerveza actualizada correctamente.</p>";
+        echo "<a href='listar_cervezas.php'>Volver al listado</a>";
     } else {
-        echo "Error al actualizar la cerveza: " . $conn->error;
+        echo "<p style='color:red;'>Error al actualizar la cerveza: " . $stmt->error . "</p>";
     }
 }
 
+// Obtener datos actuales de la cerveza
 $sql = "SELECT * FROM cervezas WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
@@ -74,4 +83,3 @@ $cerveza = $result->fetch_assoc();
 $stmt->close();
 $conn->close();
 ?>
-s

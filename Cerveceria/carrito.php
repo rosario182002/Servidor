@@ -1,10 +1,14 @@
-
 <?php
 session_start();
 include 'conexion.php';
 
-// Verificar si el usuario está logueado
-if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'usuario') {
+// Verificar si la conexión es exitosa
+if (!$conn) {
+    die("Error de conexión a la base de datos: " . mysqli_connect_error());
+}
+
+// Verificar si el usuario está logueado y no es administrador
+if (!isset($_SESSION['user_id']) || ($_SESSION['perfil'] === 'admin')) {
     header('Location: login.php');
     exit();
 }
@@ -13,8 +17,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'usuario') {
 if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
-
-// Lógica para agregar y eliminar productos (detalles no incluidos por brevedad)
 ?>
 
 <!DOCTYPE html>
@@ -30,7 +32,22 @@ if (!isset($_SESSION['carrito'])) {
         <h1>Carrito de Compras</h1>
     </header>
     <main>
-        <!-- Mostrar productos en el carrito -->
+        <h2>Productos en tu Carrito</h2>
+        <?php if (!empty($_SESSION['carrito'])): ?>
+            <ul>
+                <?php foreach ($_SESSION['carrito'] as $producto): ?>
+                    <li>
+                        <?= htmlspecialchars($producto['nombre']) ?> - 
+                        <?= number_format($producto['precio'], 2) ?> USD
+                        <a href="eliminarCerveza.php?id=<?= $producto['id'] ?>">Eliminar</a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <button>Finalizar compra</button>
+        <?php else: ?>
+            <p>Tu carrito está vacío.</p>
+        <?php endif; ?>
+        <a href="index.php">Seguir comprando</a>
     </main>
 </body>
 </html>

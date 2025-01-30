@@ -2,27 +2,43 @@
 session_start();
 require_once 'conexion.php';
 
+// Habilitar los mensajes de error para ver los detalles
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// Verificar si el usuario es admin
 if (!isset($_SESSION['usuario']) || $_SESSION['rol'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
 
+// Verificar si se ha pasado un id
 if (!isset($_GET['id'])) {
     die("ID de cerveza no proporcionado.");
 }
 
+// Obtener el id de la cerveza y asegurarse de que sea un número entero
 $id = intval($_GET['id']);
+
+// Realizar la consulta para obtener los detalles de la cerveza
 $sql = "SELECT * FROM cervezas WHERE id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result = $stmt->get_result();
 
-if ($result->num_rows === 0) {
-    die("Cerveza no encontrada.");
+if (!$stmt) {
+    die("Error al preparar la consulta.");
 }
 
-$cerveza = $result->fetch_assoc();
+$result = $stmt->execute([$id]);
+
+if (!$result) {
+    die("Error al ejecutar la consulta.");
+}
+
+$cerveza = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$cerveza) {
+    die("Cerveza no encontrada.");
+}
 ?>
 
 <!DOCTYPE html>
@@ -47,6 +63,6 @@ $cerveza = $result->fetch_assoc();
 </html>
 
 <?php
-$stmt->close();
-$conn->close();
+// Cerrar la conexión
+$conn = null;
 ?>

@@ -1,55 +1,65 @@
 <?php
 session_start();
-include 'conexion.php';
 
-// Si el formulario se envió, procesa el login
+// Conectar a la base de datos (ajusta los parámetros según tu configuración)
+$conn = mysqli_connect("localhost", "root", "", "cerveceria", 3308);
+
+// Verificar la conexión
+if (!$conn) {
+    die("Error de conexión a MySQL: " . mysqli_connect_error());
+}
+
+$error = ""; // Inicializar la variable de error
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $correo = $_POST['correo'];
-    $password = $_POST['password'];
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
 
-    // Escapar las entradas para evitar inyección SQL
-    $correo = mysqli_real_escape_string($conn, $correo);
-    
-    // Realizar la consulta
-    $query = "SELECT * FROM usuario WHERE correo = '$correo'";
-    $resultado = mysqli_query($conn, $query);
+    // Validar correo antes de la consulta
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Formato de correo inválido.";
+    } else {
+        // Preparar consulta para evitar inyección SQL
+        $query = "SELECT * FROM usuario WHERE correo = ?";
+        $stmt = mysqli_prepare($conn, $query);
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $resultado = mysqli_stmt_get_result($stmt);
 
+        if ($fila = mysqli_fetch_assoc($resultado)) {
+            // Verificar la contraseña encriptada
+            if (password_verify($password, $fila['password'])) {
+                session_regenerate_id(true); // Evita secuestro de sesión
+                $_SESSION['user_id'] = $fila['id_usuario'];
+                $_SESSION['perfil'] = $fila['perfil'];
 
-    // Verificar si el usuario existe
-    if ($fila = mysqli_fetch_assoc($resultado)) {
-        // Comparar directamente las contraseñas (sin encriptar)
-        if ($password === $fila['password']) {
-            // Guardar datos en sesión
-            $_SESSION['user_id'] = $fila['id_usuario'];
-            $_SESSION['perfil'] = $fila['perfil']; 
+                // Depuración: Verificar que la sesión se está guardando correctamente
+                var_dump($_SESSION); // Esto te ayudará a ver si la sesión se está guardando correctamente
 
-// Realizar la consulta
-
-$query = "SELECT * FROM usuario WHERE correo = '$correo'";
-$resultado = mysqli_query($conn, $query);
-
-$query = "SELECT * FROM usuario WHERE correo = $correo";
-$resultado = mysqli_query($conn, $query);
-echo $resultado;
-
-
-            // Redirigir según el perfil
-            if ($fila['perfil'] === 'admin') {
-                header('Location: productos.php');
-                exit();
+                // Redirigir según el perfil
+                switch ($fila['perfil']) {
+                    case 'admin':
+                        header('Location: admin_dashboard.php');
+                        exit();
+                    case 'cliente':
+                        header('Location: tienda.php');
+                        exit();
+                    default:
+                        header('Location: index.php');
+                        exit();
+                }
             } else {
-                header('Location: carrito.php');
-                exit();
+                $error = "Credenciales incorrectas. Inténtalo de nuevo.";
             }
         } else {
-            $error = "Correo o contraseña incorrectos.";
+            $error = "Credenciales incorrectas. Inténtalo de nuevo.";
         }
-    } else {
-        $error = "Correo o contraseña incorrectos.";
     }
+    mysqli_stmt_close($stmt);
     mysqli_close($conn);
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -61,14 +71,14 @@ echo $resultado;
 <body>
     <h1>Login</h1>
     <form method="POST" action="login.php">
-        <label for="correo">Correo:</label>
-        <input type="email" name="correo" required>
+        <label for="email">Correo:</label>
+        <input type="email" name="email" required>
         <label for="password">Contraseña:</label>
         <input type="password" name="password" required>
         <button type="submit">Ingresar</button>
     </form>
     <?php if (!empty($error)): ?>
-        <p style="color: red;"><?= $error ?></p>
+        <p style="color: red;"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>
 </body>
 </html>

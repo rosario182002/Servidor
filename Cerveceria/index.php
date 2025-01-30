@@ -1,7 +1,11 @@
-
 <?php
 session_start();
 include 'conexion.php';
+
+// Verificar conexión a la base de datos
+if (!$conn) {
+    die("Error de conexión a la base de datos: " . mysqli_connect_error());
+}
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['user_id'])) {
@@ -9,7 +13,8 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$perfil = $_SESSION['perfil']; // Perfil del usuario (admin o usuario)
+// Verificar si el perfil está definido
+$perfil = isset($_SESSION['perfil']) ? $_SESSION['perfil'] : '';
 ?>
 
 <!DOCTYPE html>
@@ -44,7 +49,11 @@ $perfil = $_SESSION['perfil']; // Perfil del usuario (admin o usuario)
         <?php else: ?>
             <h2>Catálogo de Productos</h2>
             <div class="cervezas-container">
-                <?php include 'listar_cervezas.php'; ?>
+                <?php 
+                ob_start();
+                include 'listar_cervezas.php';
+                ob_end_flush();
+                ?>
             </div>
         <?php endif; ?>
     </main>
