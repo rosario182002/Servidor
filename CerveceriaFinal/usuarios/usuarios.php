@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../General/conexion.php';
+//include '../General/conexion.php';
 
 // Verificar si el usuario es administrador
 if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') {

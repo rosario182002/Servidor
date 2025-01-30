@@ -1,7 +1,7 @@
 
 <?php
 session_start();
-include '../General/conexion.php';
+//include '../General/conexion.php';
 
 if ($_SESSION['perfil'] !== 'admin') {
     header('Location: ../General/login.php');

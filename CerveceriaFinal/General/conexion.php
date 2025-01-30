@@ -1,11 +1,16 @@
 <?php
-session_start();
-// include '../General/conexion.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Si el formulario se envió, procesa el login
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $correo = $_POST['correo'];
-    $password = $_POST['password'];
+// Datos de conexión
+$servidor = "localhost";  // Cambia si usas otro servidor
+$usuario = "root";        // Usuario de MySQL (por defecto en XAMPP)
+$password = "";           // Sin contraseña por defecto en XAMPP
+$base_datos = "cerveceria"; // Nombre de tu base de datos
+
+// Crear conexión
+$conn = mysqli_connect($servidor, $usuario, $password, $base_datos);
 
     // Escapar las entradas para evitar inyección SQL
     $correo = mysqli_real_escape_string($conn, $correo);

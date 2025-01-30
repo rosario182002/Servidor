@@ -3,7 +3,7 @@
 session_start();
 
 // Incluir la conexión a la base de datos
-include('../General/conexion.php');
+//include('../General/conexion.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Obtener datos del formulario

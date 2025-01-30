@@ -1,26 +1,20 @@
 <?php
 session_start();
-include '../General/conexion.php';
+//include '../General/conexion.php';
 
-// Si el formulario se envió, procesa el login
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $correo = $_POST['correo'];
-    $password = $_POST['password'];
+    if (!isset($conn)) {
+        die("Error: No se pudo conectar a la base de datos.");
+    }
 
-    // Escapar las entradas para evitar inyección SQL
-    $correo = mysqli_real_escape_string($conn, $correo);
-    
-    // Realizar la consulta
     $query = "SELECT * FROM usuario WHERE correo = '$correo'";
     $resultado = mysqli_query($conn, $query);
 
-    // Verificar si el usuario existe
     if ($fila = mysqli_fetch_assoc($resultado)) {
-        // Comparar directamente las contraseñas (sin encriptar)
-        if ($password === $fila['password']) {
-            // Guardar datos en sesión
+        // Usar password_verify() si las contraseñas están encriptadas
+        if (password_verify($password, $fila['password'])) {
             $_SESSION['user_id'] = $fila['id_usuario'];
-            $_SESSION['perfil'] = $fila['perfil']; 
+            $_SESSION['perfil'] = $fila['perfil'];
 
             // Redirigir según el perfil
             if ($fila['perfil'] === 'admin') {
@@ -31,14 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 exit();
             }
         } else {
-            $error = "Correo o contraseña incorrectos.";
+            header("Location: ../General/login.php?error=1");
+            exit();
         }
     } else {
-        $error = "Correo o contraseña incorrectos.";
+        header("Location: ../General/login.php?error=1");
+        exit();
     }
-    mysqli_close($conn);
 }
+mysqli_close($conn);
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

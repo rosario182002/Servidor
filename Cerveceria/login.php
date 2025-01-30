@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $query = "SELECT * FROM usuario WHERE correo = '$correo'";
     $resultado = mysqli_query($conn, $query);
 
-<<<<<<< HEAD
+
     // Verificar si el usuario existe
     if ($fila = mysqli_fetch_assoc($resultado)) {
         // Comparar directamente las contraseñas (sin encriptar)
@@ -22,17 +22,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Guardar datos en sesión
             $_SESSION['user_id'] = $fila['id_usuario'];
             $_SESSION['perfil'] = $fila['perfil']; 
-=======
+
 // Realizar la consulta
-<<<<<<< HEAD
+
 $query = "SELECT * FROM usuario WHERE correo = '$correo'";
 $resultado = mysqli_query($conn, $query);
-=======
+
 $query = "SELECT * FROM usuario WHERE correo = $correo";
 $resultado = mysqli_query($conn, $query);
 echo $resultado;
->>>>>>> 4651a1feb2db5e43c087ed9243525bdd7f0d36b7
->>>>>>> bd93013bbfc5bf39fff3c62ce287078813a91581
+
 
             // Redirigir según el perfil
             if ($fila['perfil'] === 'admin') {
