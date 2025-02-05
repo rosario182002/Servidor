@@ -13,8 +13,8 @@ if (!isset($_SESSION['usuario']) || !isset($_SESSION['rol']) || $_SESSION['rol']
     exit();
 }
 
-// Consultar cervezas en la base de datos
-$sql = "SELECT * FROM cervezas";
+// Consultar productos en la base de datos
+$sql = "SELECT * FROM productos";
 $result = $conn->query($sql);
 
 if (!$result) {
@@ -27,11 +27,11 @@ if (!$result) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listar Cervezas</title>
+    <title>Listar Productos</title>
     <link rel="stylesheet" href="./estilos/estilos.css"> 
 </head>
 <body>
-    <h1>Listado de Cervezas (Administrador)</h1>
+    <h1>Listado de Productos (Administrador)</h1>
     <a href="logout.php">Cerrar Sesión</a> <!-- Enlace para cerrar sesión -->
     
     <table border="1" class="table">
@@ -49,7 +49,7 @@ if (!$result) {
         </thead>
         <tbody>
             <?php while ($fila = $result->fetch_assoc()): ?>
-                <?php $imagen = !empty($fila['foto']) ? "imagenes/" . htmlspecialchars($fila['foto']) : "imagenes/default.jpg"; ?>
+                <?php $imagen = !empty($fila['imagen']) ? "imagenes/" . htmlspecialchars($fila['imagen']) : "imagenes/default.jpg"; ?>
                 <tr>
                     <td><?= htmlspecialchars($fila['id']); ?></td>
                     <td><?= htmlspecialchars($fila['denominacion']); ?></td>
@@ -61,9 +61,9 @@ if (!$result) {
                         <img src="<?= $imagen ?>" alt="Imagen de <?= htmlspecialchars($fila['marca']); ?>" width="100">
                     </td>
                     <td>
-                        <a href="verCerveza.php?id=<?= htmlspecialchars($fila['id']); ?>">Ver más</a>
-                        <a href="editarCerveza.php?id=<?= htmlspecialchars($fila['id']); ?>">Modificar</a>
-                        <a href="eliminarCerveza.php?id=<?= htmlspecialchars($fila['id']); ?>" onclick="return confirm('¿Estás seguro de eliminar esta cerveza?');">Eliminar</a>
+                        <a href="verProducto.php?id=<?= htmlspecialchars($fila['id']); ?>">Ver más</a>
+                        <a href="editarProducto.php?id=<?= htmlspecialchars($fila['id']); ?>">Modificar</a>
+                        <a href="eliminarProducto.php?id=<?= htmlspecialchars($fila['id']); ?>" onclick="return confirm('¿Estás seguro de eliminar este producto?');">Eliminar</a>
                     </td>
                 </tr>
             <?php endwhile; ?>

@@ -1,10 +1,8 @@
 <?php
-// Iniciar sesión para manejar posibles mensajes de error o éxito
 session_start();
-
-// Incluir la conexión a la base de datos (asegúrate de que 'conexion.php' esté configurado para PDO)
 include('conexion.php');
 
+// Verificar si el formulario se ha enviado
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Obtener datos del formulario
     $nombre_usuario = $_POST['nombre_usuario'];
@@ -16,35 +14,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($contraseña != $confirmar_contraseña) {
         $_SESSION['error'] = "Las contraseñas no coinciden.";
     } else {
-        // Verificar si el usuario o correo ya están registrados
-        // Uso correcto de PDO para preparar y ejecutar la consulta
-        $stmt = $conn->prepare("SELECT COUNT(*) AS cuenta FROM usuario WHERE nombre_usuario = :nombre_usuario OR correo = :correo");
-        $stmt->bindParam(':nombre_usuario', $nombre_usuario);
-        $stmt->bindParam(':correo', $email);
-        $stmt->execute();
-        
-        // Usamos fetch para obtener el resultado y acceder a la columna 'cuenta'
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($resultado['cuenta'] > 0) {
-            $_SESSION['error'] = "El nombre de usuario o correo electrónico ya están registrados.";
+        // Validar contraseña segura
+        if (strlen($contraseña) < 8) {
+            $_SESSION['error'] = "La contraseña debe tener al menos 8 caracteres.";
+        } elseif (!preg_match('/[A-Z]/', $contraseña)) {
+            $_SESSION['error'] = "La contraseña debe contener al menos una letra mayúscula.";
+        } elseif (!preg_match('/[a-z]/', $contraseña)) {
+            $_SESSION['error'] = "La contraseña debe contener al menos una letra minúscula.";
+        } elseif (!preg_match('/[0-9]/', $contraseña)) {
+            $_SESSION['error'] = "La contraseña debe contener al menos un número.";
+        } elseif (!preg_match('/[\W_]/', $contraseña)) { // Verifica caracteres especiales
+            $_SESSION['error'] = "La contraseña debe contener al menos un carácter especial.";
         } else {
-            // Encriptar la contraseña con password_hash()
-            $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+            // Verificar si el usuario o correo ya están registrados
+            $stmt = $conn->prepare("SELECT COUNT(*) AS cuenta FROM usuario WHERE email = ?");
+            $stmt->bind_param('s', $email); // 's' indica que el parámetro es una cadena (string)
+            $stmt->execute();
+            $stmt->bind_result($cuenta);
+            $stmt->fetch();
 
-            try {
-                // Insertar los datos en la base de datos
-                $stmt = $conn->prepare("INSERT INTO usuario (nombre_usuario, correo, password) VALUES (:nombre_usuario, :correo, :password)");
-                $stmt->bindParam(':nombre_usuario', $nombre_usuario);
-                $stmt->bindParam(':correo', $email);
-                $stmt->bindParam(':password', $contraseña_hash);
-                $stmt->execute();
-                
-                $_SESSION['success'] = "Registro exitoso. ¡Puedes iniciar sesión ahora!";
-                header("Location: login.php"); // Redirigir al login después de un registro exitoso
-                exit();
-            } catch (PDOException $e) {
-                $_SESSION['error'] = "Error al registrar el usuario: " . $e->getMessage();
+            if ($cuenta > 0) {
+                $_SESSION['error'] = "El correo electrónico ya está registrado.";
+            } else {
+                // Encriptar la contraseña con password_hash()
+                $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+
+                try {
+                    // Insertar los datos en la base de datos
+                    $stmt = $conn->prepare("INSERT INTO usuario (email, name, password, role) VALUES (?, ?, ?, ?)");
+                    $stmt->bind_param('ssss', $email, $nombre_usuario, $contraseña_hash, $role); // 'ssss' indica 4 cadenas
+
+                    $role = 'normal'; // Asumimos que el registro es para un usuario normal
+                    $stmt->execute();
+                    
+                    $_SESSION['success'] = "Registro exitoso. ¡Puedes iniciar sesión ahora!";
+                    header("Location: login.php"); // Redirigir al login después de un registro exitoso
+                    exit();
+                } catch (mysqli_sql_exception $e) {
+                    $_SESSION['error'] = "Error al registrar el usuario: " . $e->getMessage();
+                }
             }
         }
     }

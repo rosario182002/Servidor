@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Conectar a la base de datos (con el puerto correcto)
-$conn = mysqli_connect("localhost", "root", "", "cerveceria", 3308);
+$conn = mysqli_connect("localhost", "root", "", "cerveceria", 3307);
 
 // Verificar la conexión
 if (!$conn) {
@@ -15,7 +15,7 @@ if (!$conn) {
 // Función para comprobar si el correo ya existe en la base de datos
 function existe($email) {
     global $conn;
-    $sql = "SELECT correo FROM usuarios WHERE correo = ?";
+    $sql = "SELECT email FROM usuario WHERE email = ?";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "s", $email);
     mysqli_stmt_execute($stmt);
@@ -27,13 +27,18 @@ function existe($email) {
 
 // Si se presiona el botón de acceso
 if (isset($_POST['btnA'])) {
-    // Sanitizar el email ingresado
+    // Sanitizar y validar el email ingresado
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
 
-    if (existe($email)) {
-        echo "El correo ya está registrado.";
+    // Validar si el correo tiene un formato correcto
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "Formato de correo inválido.";
     } else {
-        echo "El correo no existe en la base de datos.";
+        if (existe($email)) {
+            echo "El correo ya está registrado.";
+        } else {
+            echo "El correo no existe en la base de datos.";
+        }
     }
 }
 ?>

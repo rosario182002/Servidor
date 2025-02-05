@@ -2,7 +2,7 @@
 session_start();
 require_once 'conexion.php';
 
-// Habilitar los mensajes de error para ver los detalles
+// Habilitar los mensajes de error para ver los detalles (esto se debe desactivar en producción)
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -56,7 +56,15 @@ if (!$cerveza) {
     <p><strong>Formato:</strong> <?= htmlspecialchars($cerveza['formato']); ?></p>
     <p><strong>Tamaño:</strong> <?= htmlspecialchars($cerveza['tamano']); ?></p>
     <p><strong>Foto:</strong><br>
-        <img src="imagenes/<?= htmlspecialchars($cerveza['foto']); ?>" alt="Imagen de <?= htmlspecialchars($cerveza['marca']); ?>" width="200">
+        <?php
+            // Verificar si la imagen existe antes de mostrarla
+            $fotoPath = "imagenes/" . htmlspecialchars($cerveza['foto']);
+            if (file_exists($fotoPath)) {
+                echo '<img src="' . $fotoPath . '" alt="Imagen de ' . htmlspecialchars($cerveza['marca']) . '" width="200">';
+            } else {
+                echo '<img src="imagenes/no_imagen_disponible.jpg" alt="Imagen no disponible" width="200">';
+            }
+        ?>
     </p>
     <a href="listar_cervezas.php">Volver al listado</a>
 </body>

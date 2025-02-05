@@ -13,15 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'add') {
             // Agregar usuario
-            $correo = $_POST['correo'];
+            $email = $_POST['email'];
+            $name = $_POST['name'];
             $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-            $edad = $_POST['edad'];
-            $perfil = $_POST['perfil'];
+            $age = $_POST['age'];
+            $role = $_POST['role'];
 
-            if (!empty($correo) && !empty($password) && !empty($edad) && !empty($perfil)) {
+            if (!empty($email) && !empty($password) && !empty($name) && !empty($age) && !empty($role)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO usuario (CORREO, PASSWORD, EDAD, PERFIL) VALUES (?, ?, ?, ?)");
-                    $stmt->execute([$correo, $password, $edad, $perfil]);
+                    $stmt = $pdo->prepare("INSERT INTO usuario (email, name, password, age, role) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([$email, $name, $password, $age, $role]);
                     $success = "Usuario agregado con éxito.";
                 } catch (PDOException $e) {
                     $error = "Error al agregar usuario: " . $e->getMessage();
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Eliminar usuario
             $id = $_POST['id'];
             try {
-                $stmt = $pdo->prepare("DELETE FROM usuario WHERE ID_USUARIO = ?");
+                $stmt = $pdo->prepare("DELETE FROM usuario WHERE id = ?");
                 $stmt->execute([$id]);
                 $success = "Usuario eliminado con éxito.";
             } catch (PDOException $e) {
@@ -66,19 +67,21 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <tr>
                 <th>ID</th>
                 <th>Correo</th>
+                <th>Nombre</th>
                 <th>Edad</th>
                 <th>Perfil</th>
                 <th>Acciones</th>
             </tr>
             <?php foreach ($usuarios as $usuario): ?>
                 <tr>
-                    <td><?= htmlspecialchars($usuario['ID_USUARIO']) ?></td>
-                    <td><?= htmlspecialchars($usuario['CORREO']) ?></td>
-                    <td><?= htmlspecialchars($usuario['EDAD']) ?></td>
-                    <td><?= htmlspecialchars($usuario['PERFIL']) ?></td>
+                    <td><?= htmlspecialchars($usuario['id']) ?></td>
+                    <td><?= htmlspecialchars($usuario['email']) ?></td>
+                    <td><?= htmlspecialchars($usuario['name']) ?></td>
+                    <td><?= htmlspecialchars($usuario['age']) ?></td>
+                    <td><?= htmlspecialchars($usuario['role']) ?></td>
                     <td>
                         <form method="POST" action="usuarios.php">
-                            <input type="hidden" name="id" value="<?= htmlspecialchars($usuario['ID_USUARIO']) ?>">
+                            <input type="hidden" name="id" value="<?= htmlspecialchars($usuario['id']) ?>">
                             <button type="submit" name="action" value="delete">Eliminar</button>
                         </form>
                     </td>
@@ -88,16 +91,18 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <h2>Agregar Usuario</h2>
         <form method="POST" action="usuarios.php">
-            <label for="correo">Correo:</label>
-            <input type="email" name="correo" required>
+            <label for="email">Correo:</label>
+            <input type="email" name="email" required>
+            <label for="name">Nombre:</label>
+            <input type="text" name="name" required>
             <label for="password">Contraseña:</label>
             <input type="password" name="password" required>
-            <label for="edad">Edad:</label>
-            <input type="number" name="edad" required>
-            <label for="perfil">Perfil:</label>
-            <select name="perfil" required>
+            <label for="age">Edad:</label>
+            <input type="number" name="age" required>
+            <label for="role">Perfil:</label>
+            <select name="role" required>
                 <option value="admin">Administrador</option>
-                <option value="usuario">Usuario</option>
+                <option value="user">Usuario</option>
             </select>
             <button type="submit" name="action" value="add">Agregar Usuario</button>
         </form>

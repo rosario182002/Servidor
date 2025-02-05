@@ -16,7 +16,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'admin') {
 // Verificar si el ID es válido
 $id = filter_var($_GET['id'], FILTER_VALIDATE_INT);
 if (!$id) {
-    die("ID de cerveza no válido.");
+    // En lugar de simplemente dar error, se redirige con un mensaje
+    header("Location: listar_cervezas.php?error=ID no válido");
+    exit();
 }
 
 // Procesar formulario de edición
@@ -27,15 +29,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formato = htmlspecialchars($_POST['formato']);
     $tamano = htmlspecialchars($_POST['tamano']);
 
-    $sql = "UPDATE cervezas SET denominacion = ?, marca = ?, tipo = ?, formato = ?, tamano = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssssi", $denominacion, $marca, $tipo, $formato, $tamano, $id);
-
-    if ($stmt->execute()) {
-        echo "<p style='color:green;'>Cerveza actualizada correctamente.</p>";
-        echo "<a href='listar_cervezas.php'>Volver al listado</a>";
+    // Validación básica de los datos (puedes personalizarla más según tus necesidades)
+    if (empty($denominacion) || empty($marca) || empty($tipo) || empty($formato) || empty($tamano)) {
+        $mensaje_error = "Todos los campos son obligatorios.";
     } else {
-        echo "<p style='color:red;'>Error al actualizar la cerveza: " . $stmt->error . "</p>";
+        // Actualizar los datos de la cerveza
+        $sql = "UPDATE cervezas SET denominacion = ?, marca = ?, tipo = ?, formato = ?, tamano = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssssi", $denominacion, $marca, $tipo, $formato, $tamano, $id);
+
+        if ($stmt->execute()) {
+            // Redirigir a la lista de cervezas con un mensaje de éxito
+            header("Location: listar_cervezas.php?success=Cerveza actualizada correctamente");
+            exit();
+        } else {
+            $mensaje_error = "Error al actualizar la cerveza: " . $stmt->error;
+        }
     }
 }
 
@@ -47,7 +56,9 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    die("Cerveza no encontrada.");
+    // Redirigir con mensaje de error si no se encuentra la cerveza
+    header("Location: listar_cervezas.php?error=Cerveza no encontrada");
+    exit();
 }
 
 $cerveza = $result->fetch_assoc();
@@ -62,19 +73,30 @@ $cerveza = $result->fetch_assoc();
 </head>
 <body>
     <h1>Editar Cerveza</h1>
+
+    <?php if (isset($mensaje_error)): ?>
+        <p style="color:red;"><?= $mensaje_error ?></p>
+    <?php endif; ?>
+
     <form method="post">
         <label for="denominacion">Denominación:</label>
         <input type="text" id="denominacion" name="denominacion" value="<?= htmlspecialchars($cerveza['denominacion']); ?>" required><br>
+        
         <label for="marca">Marca:</label>
         <input type="text" id="marca" name="marca" value="<?= htmlspecialchars($cerveza['marca']); ?>" required><br>
+        
         <label for="tipo">Tipo:</label>
         <input type="text" id="tipo" name="tipo" value="<?= htmlspecialchars($cerveza['tipo']); ?>" required><br>
+        
         <label for="formato">Formato:</label>
         <input type="text" id="formato" name="formato" value="<?= htmlspecialchars($cerveza['formato']); ?>" required><br>
+        
         <label for="tamano">Tamaño:</label>
         <input type="text" id="tamano" name="tamano" value="<?= htmlspecialchars($cerveza['tamano']); ?>" required><br>
+        
         <button type="submit">Guardar Cambios</button>
     </form>
+
     <a href="listar_cervezas.php">Volver al listado</a>
 </body>
 </html>

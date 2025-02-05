@@ -1,53 +1,43 @@
 <?php
 session_start();
+require_once 'conexion.php';  // Incluye la conexión a la base de datos
 
-// Conectar a la base de datos (ajusta los parámetros según tu configuración)
-$conn = mysqli_connect("localhost", "root", "", "cerveceria", 3308);
-
-// Verificar la conexión
-if (!$conn) {
-    die("Error de conexión a MySQL: " . mysqli_connect_error());
+// Verificar si ya existe una sesión activa
+if (isset($_SESSION['user_id'])) {
+    header('Location: index.php');
+    exit();
 }
 
-$error = ""; // Inicializar la variable de error
+// Verificar si se ha enviado el formulario de login
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL); // Sanitiza el email
+    $password = $_POST['password']; // Obtén la contraseña
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-
-    // Validar correo antes de la consulta
+    // Validar formato de email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Formato de correo inválido.";
     } else {
-        // Preparar consulta para evitar inyección SQL
-        $query = "SELECT * FROM usuario WHERE correo = ?";
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, "s", $email);
-        mysqli_stmt_execute($stmt);
-        $resultado = mysqli_stmt_get_result($stmt);
+        // Consulta para verificar el email y el perfil del usuario
+        $sql = "SELECT * FROM usuario WHERE email = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
 
-        if ($fila = mysqli_fetch_assoc($resultado)) {
-            // Verificar la contraseña encriptada
+        // Si el usuario existe
+        if ($fila = $resultado->fetch_assoc()) {
+            // Verificar que la contraseña sea correcta
             if (password_verify($password, $fila['password'])) {
-                session_regenerate_id(true); // Evita secuestro de sesión
-                $_SESSION['user_id'] = $fila['id_usuario'];
-                $_SESSION['perfil'] = $fila['perfil'];
-
-                // Depuración: Verificar que la sesión se está guardando correctamente
-                var_dump($_SESSION); // Esto te ayudará a ver si la sesión se está guardando correctamente
+                $_SESSION['user_id'] = $fila['id'];  // Guardar ID del usuario
+                $_SESSION['perfil'] = $fila['role']; // Guardar perfil (admin o normal)
 
                 // Redirigir según el perfil
-                switch ($fila['perfil']) {
-                    case 'admin':
-                        header('Location: admin_dashboard.php');
-                        exit();
-                    case 'cliente':
-                        header('Location: tienda.php');
-                        exit();
-                    default:
-                        header('Location: index.php');
-                        exit();
+                if ($fila['role'] === 'admin') {
+                    header('Location: admin_dashboard.php'); // Panel de administración
+                } else {
+                    header('Location: tienda.php');  // Redirigir a tienda si es cliente
                 }
+                exit();
             } else {
                 $error = "Credenciales incorrectas. Inténtalo de nuevo.";
             }
@@ -55,11 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "Credenciales incorrectas. Inténtalo de nuevo.";
         }
     }
-    mysqli_stmt_close($stmt);
-    mysqli_close($conn);
 }
 ?>
 
+<!-- HTML de login -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -72,13 +61,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <h1>Login</h1>
     <form method="POST" action="login.php">
         <label for="email">Correo:</label>
-        <input type="email" name="email" required>
+        <input type="email" name="email" id="email" required>
+        
         <label for="password">Contraseña:</label>
-        <input type="password" name="password" required>
+        <input type="password" name="password" id="password" required>
+        
         <button type="submit">Ingresar</button>
     </form>
+    
     <?php if (!empty($error)): ?>
-        <p style="color: red;"><?= htmlspecialchars($error) ?></p>
+        <p style="color: red;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
     <?php endif; ?>
 </body>
 </html>

@@ -1,35 +1,42 @@
 <?php
 session_start();
-include 'conexion.php';
+include 'conexion.php'; // Conexión a la base de datos
 
+// Verificar si el usuario tiene rol de admin
 if ($_SESSION['perfil'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
 
-// Insert a new product
+// Insertar un nuevo producto
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nombre = $_POST['nombre'];
+    $denominacion = $_POST['nombre'];
     $marca = $_POST['marca'];
     $tipo = $_POST['tipo'];
     $formato = $_POST['formato'];
-    $tamaño = $_POST['tamano'];
-    $alergias = isset($_POST['alergias']) ? implode(", ", $_POST['alergias']) : ''; // Si no se seleccionan alergias, será una cadena vacía
+    $tamano = $_POST['tamano'];
+    $alergias = isset($_POST['alergias']) ? implode(", ", $_POST['alergias']) : ''; // Alergias seleccionadas
     $cantidad = $_POST['cantidad'];
-    $foto = $_POST['foto']; // Si decides usar imágenes como URL
+    $foto = $_POST['foto']; // URL de la foto
     $observaciones = $_POST['observaciones'];
 
     // Validar campos vacíos
-    if (empty($nombre) || empty($marca) || empty($tipo) || empty($formato) || empty($tamaño) || empty($cantidad) || empty($foto)) {
+    if (empty($denominacion) || empty($marca) || empty($tipo) || empty($formato) || empty($tamano) || empty($cantidad) || empty($foto)) {
         $error = "Todos los campos son obligatorios.";
     } else {
         // Consulta SQL
-        $stmt = $pdo->prepare("INSERT INTO productos (Denominacion_Cerveza, Marca, Tipo_Envase, Formato, Tamano, Cantidad, Alergias, Foto, Observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$nombre, $marca, $tipo, $formato, $tamaño, $cantidad, $alergias, $foto, $observaciones]);
-        $success = "Producto agregado con éxito.";
+        $stmt = $conn->prepare("INSERT INTO productos (denominacion, marca, tipo, formato, tamano, alergenos, precio, imagen, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssds", $denominacion, $marca, $tipo, $formato, $tamano, $alergias, $cantidad, $foto, $observaciones);
+        
+        if ($stmt->execute()) {
+            $success = "Producto agregado con éxito.";
+        } else {
+            $error = "Hubo un problema al agregar el producto. Inténtalo de nuevo.";
+        }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,13 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <h1>Gestión de Productos</h1>
     <form method="POST" action="productos.php">
-        <label for="nombre">Nombre:</label>
+        <label for="nombre">Denominación:</label>
         <input type="text" name="nombre" required>
 
         <label for="marca">Marca:</label>
         <input type="text" name="marca" required>
 
-        <label for="tipo">Tipo de cerveza:</label>
+        <label for="tipo">Tipo de Producto:</label>
         <select name="tipo">
             <option value="Lager">Lager</option>
             <option value="Pale Ale">Pale Ale</option>
@@ -66,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <input type="checkbox" name="alergias[]" value="Gluten"> Gluten
         <input type="checkbox" name="alergias[]" value="Lactosa"> Lactosa
         <input type="checkbox" name="alergias[]" value="Sulfitos"> Sulfitos
-        <!-- Puedes agregar más alergias aquí si es necesario -->
 
         <label for="cantidad">Cantidad:</label>
         <input type="number" name="cantidad" required>
@@ -81,9 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </form>
 
     <?php if (!empty($error)): ?>
-        <p style="color: red;"><?= $error ?></p>
+        <p style="color: red;"><?= htmlspecialchars($error) ?></p>
     <?php elseif (!empty($success)): ?>
-        <p style="color: green;"><?= $success ?></p>
+        <p style="color: green;"><?= htmlspecialchars($success) ?></p>
     <?php endif; ?>
 </body>
 </html>
