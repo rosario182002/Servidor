@@ -8,12 +8,12 @@ if (!$conn) {
 }
 
 // Verificar si el usuario está logueado y si tiene un perfil válido
-// if (!isset($_SESSION['user_id'])) {
-//     header('Location: login.php');
-//     exit();
-// }
+ if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+   exit();
+}
 
-//$perfil = $_SESSION['perfil'] ?? ''; // Usar null coalescing operator para una mejor lectura
+$perfil = $_SESSION['perfil'] ?? ''; // Usar null coalescing operator para una mejor lectura
 ?>
 
 <!DOCTYPE html>
@@ -30,7 +30,7 @@ if (!$conn) {
         <nav>
             <ul>
                 <li><a href="index.php">Inicio</a></li>
-                <?php if ($perfil === 'admin'): ?>
+                <?php if ($perfil === 'usuario'): ?>
                     <li><a href="productos.php">Gestión de Productos</a></li>
                     <li><a href="usuarios.php">Gestión de Usuarios</a></li>
                 <?php else: ?>
@@ -42,7 +42,7 @@ if (!$conn) {
     </header>
 
     <main>
-        <?php if ($perfil === 'admin'): ?>
+        <?php if ($perfil === 'usuario'): ?>
             <h2>Panel de Administración</h2>
             <p>Utilice las opciones del menú para gestionar productos y usuarios.</p>
         <?php else: ?>
@@ -61,4 +61,3 @@ if (!$conn) {
     </footer>
 </body>
 </html>
-

@@ -5,7 +5,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Conectar a la base de datos (con el puerto correcto)
-$conn = mysqli_connect("localhost", "root", "", "cerveceria", 3307);
+$conn = mysqli_connect("localhost", "root", "", "cerveceria", port: 3307);
 
 // Verificar la conexión
 if (!$conn) {

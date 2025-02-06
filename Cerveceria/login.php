@@ -33,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Redirigir según el perfil
                 if ($fila['role'] === 'admin') {
-                    header('Location: admin_dashboard.php'); // Panel de administración
+                    header('Location: administrador.php'); // Panel de administración
                 } else {
-                    header('Location: tienda.php');  // Redirigir a tienda si es cliente
+                    header('Location: index.php');  // Redirigir a tienda si es cliente
                 }
                 exit();
             } else {
