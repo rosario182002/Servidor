@@ -1,54 +1,55 @@
 <?php
 session_start();
-require_once 'conexion.php';  // Incluye la conexión a la base de datos
+include('conexion.php');
 
-// Verificar si ya existe una sesión activa
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
     exit();
 }
 
-// Verificar si se ha enviado el formulario de login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL); // Sanitiza el email
-    $password = $_POST['password']; // Obtén la contraseña
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $password = trim($_POST['password']); 
+    $password = preg_replace('/[^\x00-\x7F]+/', '', $password); 
 
-    // Validar formato de email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Formato de correo inválido.";
     } else {
-        // Consulta para verificar el email y el perfil del usuario
-        $sql = "SELECT * FROM usuario WHERE email = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $resultado = $stmt->get_result();
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM usuario WHERE email = ?");
+            $stmt->execute([$email]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Si el usuario existe
-        if ($fila = $resultado->fetch_assoc()) {
-            // Verificar que la contraseña sea correcta
-            if (password_verify($password, $fila['password'])) {
-                $_SESSION['user_id'] = $fila['id'];  // Guardar ID del usuario
-                $_SESSION['perfil'] = $fila['role']; // Guardar perfil (admin o normal)
+            if ($fila) {
+                $fila['password'] = trim($fila['password']); 
 
-                // Redirigir según el perfil
-                if ($fila['role'] === 'admin') {
-                    header('Location: administrador.php'); // Panel de administración
+                $verificado = password_verify($password, $fila['password']);
+
+                
+                var_dump($password); 
+                var_dump($fila['password']); 
+                var_dump($verificado); 
+
+                if ($verificado) {
+                    $_SESSION['user_id'] = $fila['id'];
+                    $_SESSION['perfil'] = $fila['role'];
+                    header('Location: ' . ($fila['role'] === 'admin' ? 'administrador.php' : 'index.php'));
+                    exit();
                 } else {
-                    header('Location: index.php');  // Redirigir a tienda si es cliente
+                    $error = "Credenciales incorrectas.";
                 }
-                exit();
             } else {
-                $error = "Credenciales incorrectas. Inténtalo de nuevo.";
+                $error = "Credenciales incorrectas.";
             }
-        } else {
-            $error = "Credenciales incorrectas. Inténtalo de nuevo.";
+
+        } catch (PDOException $e) {
+            $error = "Error al iniciar sesión: " . $e->getMessage();
         }
     }
 }
+
 ?>
 
-<!-- HTML de login -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -56,6 +57,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="./estilos/estilos.css">
+    <meta charset="UTF-8">
+    <style>
+        form {
+            width: 300px;                
+            margin: 0 auto;            
+            padding: 20px;             
+            border: 1px solid #ccc;    
+            border-radius: 5px;         
+            display: flex;             
+            flex-direction: column;    
+        }
+
+        label {
+            display: block;            
+            margin-bottom: 5px;        
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;                
+            padding: 8px;              
+            margin-bottom: 15px;        
+            border: 1px solid #ccc;    
+            border-radius: 4px;         
+            box-sizing: border-box;     
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;  
+            color: white;             
+            padding: 10px 15px;         
+            border: none;               
+            border-radius: 4px;         
+            cursor: pointer;             
+        }
+
+        button[type="submit"]:hover {
+            background-color: #3e8e41;   
+        }
+
+        .error {
+            color: red;                
+            margin-top: 10px;           
+        }
+    </style>
 </head>
 <body>
     <h1>Login</h1>
@@ -70,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
     
     <?php if (!empty($error)): ?>
-        <p style="color: red;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
     <?php endif; ?>
 </body>
 </html>

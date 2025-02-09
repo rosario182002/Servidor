@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'conexion.php';
 
 // Verificar si el usuario es administrador
 if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'admin') {
@@ -21,9 +22,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'admin') {
         <h1>Panel de Administrador</h1>
         <nav>
             <ul>
+                <li><a href="administrador.php">Inicio</a></li>
                 <li><a href="productos.php">Gestión de Productos</a></li>
                 <li><a href="usuarios.php">Gestión de Usuarios</a></li>
-                <li><a href="index.php">Volver al Inicio</a></li>
                 <li><a href="logout.php">Cerrar Sesión</a></li>
             </ul>
         </nav>

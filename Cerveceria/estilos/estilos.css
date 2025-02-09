@@ -174,3 +174,22 @@ form button:hover {
     background-color: #1D4C7A;
     transform: translateY(-3px);
 }
+.cervezas-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.cerveza {
+    width: 200px; /* Ancho fijo para cada contenedor de cerveza */
+    padding: 10px;
+    margin: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+.cerveza img {
+    width: 150px;       /* Ancho fijo para todas las imágenes */
+    height: 150px;      /* Alto fijo para todas las imágenes */
+    object-fit: cover;   /* Asegura que la imagen cubra el espacio sin distorsionarse */
+}

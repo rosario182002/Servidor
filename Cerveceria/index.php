@@ -2,18 +2,14 @@
 session_start();
 include 'conexion.php';
 
-// Verificar conexión a la base de datos
-if (!$conn) {
-    die("Error de conexión a la base de datos: " . mysqli_connect_error());
+// Verificar si el usuario está logueado
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
 }
 
-// Verificar si el usuario está logueado y si tiene un perfil válido
-// if (!isset($_SESSION['user_id'])) {
-//     header('Location: login.php');
-//     exit();
-// }
-
-//$perfil = $_SESSION['perfil'] ?? ''; // Usar null coalescing operator para una mejor lectura
+// Obtener el perfil del usuario (admin o normal)
+$perfil = $_SESSION['perfil'] ?? ''; // Usar operador null coalescing
 ?>
 
 <!DOCTYPE html>
@@ -23,6 +19,27 @@ if (!$conn) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda de Cervezas</title>
     <link rel="stylesheet" href="./estilos/estilos.css">
+    <style>
+        .cervezas-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .cerveza {
+            width: 200px; /* Ancho fijo para cada contenedor de cerveza */
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .cerveza img {
+            width: 150px;       /* Ancho fijo para todas las imágenes */
+            height: 150px;      /* Alto fijo para todas las imágenes */
+            object-fit: cover;   /* Asegura que la imagen cubra el espacio sin distorsionarse */
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -49,16 +66,47 @@ if (!$conn) {
             <h2>Catálogo de Productos</h2>
             <div class="cervezas-container">
                 <?php
-                // Si el perfil es 'user', puedes incluir el archivo de cervezas
-                include 'listar_cervezas.php';
+                // Obtener la lista de cervezas desde la base de datos
+                try {
+                    $stmt = $pdo->prepare("SELECT * FROM productos");
+                    $stmt->execute();
+                    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    if ($productos) {
+                        foreach ($productos as $producto) {
+                            echo '<div class="cerveza">';
+                            // Mostrar la imagen de la cerveza
+                            $imagen = !empty($producto['imagen']) ? htmlspecialchars($producto['imagen']) : "imagenes/default.jpg";
+                            echo '<img src="' . $imagen . '" alt="Imagen de ' . htmlspecialchars($producto['denominacion']) . '">';
+                            echo '<h3>' . htmlspecialchars($producto['denominacion']) . '</h3>';
+                            echo '<p>Marca: ' . htmlspecialchars($producto['marca']) . '</p>';
+                            echo '<p>Tipo: ' . htmlspecialchars($producto['tipo']) . '</p>';
+                            echo '<p>Precio: $' . number_format($producto['precio'], 2) . '</p>';
+
+                            // Mostrar opciones para administradores
+                            if ($perfil === 'admin') {
+                                echo '<a href="editarProducto.php?id=' . htmlspecialchars($producto['id']) . '">Modificar Registro</a>';
+                                echo ' | ';
+                                echo '<a href="eliminarProducto.php?id=' . htmlspecialchars($producto['id']) . '">Borrar Registro</a>';
+                            } else {
+                                echo '<a href="agregarProducto.php?id=' . htmlspecialchars($producto['id']) . '">Agregar al carrito</a>';
+                            }
+
+                            echo '</div>';
+                        }
+                    } else {
+                        echo '<p>No hay productos disponibles.</p>';
+                    }
+                } catch (PDOException $e) {
+                    echo "Error al obtener productos: " . $e->getMessage();
+                }
                 ?>
             </div>
         <?php endif; ?>
     </main>
 
     <footer>
-        <p>&copy; 2025 Tienda de Cervezas</p>
+        <p>© 2025 Tienda de Cervezas</p>
     </footer>
 </body>
 </html>
-

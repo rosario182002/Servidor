@@ -1,96 +1,62 @@
 <?php
 session_start();
-include('conexion.php'); // Asegúrate de que este archivo define correctamente la variable $conn
+include('conexion.php');
 
-// Verificar si el formulario se ha enviado
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Obtener y sanitizar los datos del formulario
     $nombre_usuario = htmlspecialchars($_POST['nombre_usuario']);
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     $contraseña = $_POST['contraseña'];
     $confirmar_contraseña = $_POST['confirmar_contraseña'];
 
-    // Validar que el email es correcto
+    // Validaciones (¡Importantísimo mantenerlas!)
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['error'] = "El correo electrónico no es válido.";
         header("Location: registro.php");
         exit();
     }
 
-    // Verificar si las contraseñas coinciden
     if ($contraseña !== $confirmar_contraseña) {
         $_SESSION['error'] = "Las contraseñas no coinciden.";
         header("Location: registro.php");
         exit();
     }
 
-    // Validar contraseña segura
-    if (strlen($contraseña) < 8) {
-        $_SESSION['error'] = "La contraseña debe tener al menos 8 caracteres.";
-    } elseif (!preg_match('/[A-Z]/', $contraseña)) {
-        $_SESSION['error'] = "La contraseña debe contener al menos una letra mayúscula.";
-    } elseif (!preg_match('/[a-z]/', $contraseña)) {
-        $_SESSION['error'] = "La contraseña debe contener al menos una letra minúscula.";
-    } elseif (!preg_match('/[0-9]/', $contraseña)) {
-        $_SESSION['error'] = "La contraseña debe contener al menos un número.";
-    } elseif (!preg_match('/[\W_]/', $contraseña)) { // Verifica caracteres especiales
-        $_SESSION['error'] = "La contraseña debe contener al menos un carácter especial.";
-    }
-
-    // Si hay errores en la validación de contraseña, redirigir
-    if (isset($_SESSION['error'])) {
+    // Validar contraseña segura (longitud, mayúsculas, minúsculas, números, símbolos)
+    if (strlen($contraseña) < 8 || !preg_match('/[A-Z]/', $contraseña) || !preg_match('/[a-z]/', $contraseña) || !preg_match('/[0-9]/', $contraseña) || !preg_match('/[\W_]/', $contraseña)) {
+        $_SESSION['error'] = "La contraseña debe tener al menos 8 caracteres y contener al menos una mayúscula, una minúscula, un número y un símbolo.";
         header("Location: registro.php");
         exit();
     }
 
-    // Verificar si el usuario o correo ya están registrados
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM usuario WHERE email = ?");
-    if (!$stmt) {
-        $_SESSION['error'] = "Error en la consulta de verificación.";
-        header("Location: registro.php");
-        exit();
-    }
-    
-    $stmt->bind_param('s', $email);
-    $stmt->execute();
-    $stmt->store_result();
-    $stmt->bind_result($cuenta);
-    $stmt->fetch();
-    $stmt->close();
-
-    if ($cuenta > 0) {
-        $_SESSION['error'] = "El correo electrónico ya está registrado.";
-        header("Location: registro.php");
-        exit();
-    }
-
-    // Encriptar la contraseña
-    $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
-    $role = 'normal'; // Asumimos que el registro es para un usuario normal
-
-    // Insertar el usuario en la base de datos
     try {
-        $stmt = $conn->prepare("INSERT INTO usuario (email, name, `password`, role) VALUES (?, ?, ?, ?)");
-        if (!$stmt) {
-            throw new Exception("Error en la preparación de la consulta.");
+        // Verificar si el correo ya está registrado
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuario WHERE email = ?");
+        $stmt->execute([$email]);
+        $count = $stmt->fetchColumn();
+
+        if ($count > 0) {
+            $_SESSION['error'] = "El correo electrónico ya está registrado.";
+            header("Location: registro.php");
+            exit();
         }
-        
-        $stmt->bind_param('ssss', $email, $nombre_usuario, $contraseña_hash, $role);
-        $stmt->execute();
-        $stmt->close();
+
+        // Encriptar la contraseña
+        $contraseña_hash = password_hash($contraseña, PASSWORD_DEFAULT);
+
+        // Insertar el usuario
+        $stmt = $pdo->prepare("INSERT INTO usuario (email, name, password, role) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$email, $nombre_usuario, $contraseña_hash, 'normal']);
 
         $_SESSION['success'] = "Registro exitoso. ¡Puedes iniciar sesión ahora!";
         header("Location: login.php");
         exit();
-    } catch (Exception $e) {
-        $_SESSION['error'] = "Error al registrar el usuario: " . $e->getMessage();
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Error al registrar: " . $e->getMessage();
         header("Location: registro.php");
         exit();
     }
 }
 
-// Cerrar conexión
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -100,6 +66,32 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Tienda Cervecera</title>
     <link href="estilos/estilos.css" rel="stylesheet" />
+    <style>
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 150%;       
+            max-width: 250px;   
+            padding: 8px;       
+            margin-bottom: 10px;  
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50; 
+            color: white;          
+            padding: 10px 15px;     
+            border: none;          
+            border-radius: 4px;     
+            cursor: pointer;        
+        }
+
+        button[type="submit"]:hover {
+            background-color: #3e8e41; 
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -130,7 +122,7 @@ $conn->close();
     </main>
 
     <footer>
-        <p>&copy; 2025 Tienda de Cervezas Online. Todos los derechos reservados.</p>
+        <p>© 2025 Tienda de Cervezas Online. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>

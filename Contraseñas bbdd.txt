@@ -1,0 +1,9 @@
+USUARIOS
+
+antonio@correo.com - Profesor_123456
+
+
+
+Admin
+
+admin@example.com - ContrasenaSegura123!s

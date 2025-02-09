@@ -1,9 +1,9 @@
 <?php
 session_start();
-include 'conexion.php';
+require_once 'conexion.php';
 
 // Verificar si el usuario es administrador
-if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['perfil'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
@@ -13,16 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         if ($_POST['action'] === 'add') {
             // Agregar usuario
-            $email = $_POST['email'];
-            $name = $_POST['name'];
-            $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-            $age = $_POST['age'];
-            $role = $_POST['role'];
+            $email = htmlspecialchars($_POST['email']);
+            $name = htmlspecialchars($_POST['name']);
+            $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            $role = htmlspecialchars($_POST['role']); // Obtener el rol del formulario
 
-            if (!empty($email) && !empty($password) && !empty($name) && !empty($age) && !empty($role)) {
+            if (!empty($email) && !empty($password) && !empty($name) && !empty($role)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO usuario (email, name, password, age, role) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->execute([$email, $name, $password, $age, $role]);
+                    $stmt = $pdo->prepare("INSERT INTO usuario (email, name, password, role) VALUES (?, ?, ?, ?)");
+                    $stmt->execute([$email, $name, $password, $role]);
                     $success = "Usuario agregado con éxito.";
                 } catch (PDOException $e) {
                     $error = "Error al agregar usuario: " . $e->getMessage();
@@ -32,21 +31,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($_POST['action'] === 'delete') {
             // Eliminar usuario
-            $id = $_POST['id'];
-            try {
-                $stmt = $pdo->prepare("DELETE FROM usuario WHERE id = ?");
-                $stmt->execute([$id]);
-                $success = "Usuario eliminado con éxito.";
-            } catch (PDOException $e) {
-                $error = "Error al eliminar usuario: " . $e->getMessage();
+            $id = intval($_POST['id']); // Asegurarse de que el ID sea un entero
+
+            // Evitar que un administrador se elimine a sí mismo
+            if ($id === $_SESSION['user_id']) {
+                $error = "No puedes eliminar tu propia cuenta.";
+            } else {
+                try {
+                    $stmt = $pdo->prepare("DELETE FROM usuario WHERE id = ?");
+                    $stmt->execute([$id]);
+                    $success = "Usuario eliminado con éxito.";
+                } catch (PDOException $e) {
+                    $error = "Error al eliminar usuario: " . $e->getMessage();
+                }
             }
         }
     }
 }
 
 // Obtener lista de usuarios
-$stmt = $pdo->query("SELECT * FROM usuario");
-$usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare("SELECT id, email, name, role FROM usuario"); // No seleccionar la contraseña
+    $stmt->execute();
+    $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $error = "Error al obtener la lista de usuarios: " . $e->getMessage();
+    $usuarios = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -60,58 +71,66 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <header>
         <h1>Gestión de Usuarios</h1>
+        <nav>
+            <ul>
+                <li><a href="administrador.php">Volver al Panel</a></li>
+                <li><a href="logout.php">Cerrar Sesión</a></li>
+            </ul>
+        </nav>
     </header>
     <main>
         <h2>Lista de Usuarios</h2>
-        <table border="1">
-            <tr>
-                <th>ID</th>
-                <th>Correo</th>
-                <th>Nombre</th>
-                <th>Edad</th>
-                <th>Perfil</th>
-                <th>Acciones</th>
-            </tr>
-            <?php foreach ($usuarios as $usuario): ?>
+        <?php if (isset($error)): ?>
+            <p class="error"><?= htmlspecialchars($error) ?></p>
+        <?php endif; ?>
+        <?php if (isset($success)): ?>
+            <p class="success"><?= htmlspecialchars($success) ?></p>
+        <?php endif; ?>
+        <table>
+            <thead>
                 <tr>
-                    <td><?= htmlspecialchars($usuario['id']) ?></td>
-                    <td><?= htmlspecialchars($usuario['email']) ?></td>
-                    <td><?= htmlspecialchars($usuario['name']) ?></td>
-                    <td><?= htmlspecialchars($usuario['age']) ?></td>
-                    <td><?= htmlspecialchars($usuario['role']) ?></td>
-                    <td>
-                        <form method="POST" action="usuarios.php">
-                            <input type="hidden" name="id" value="<?= htmlspecialchars($usuario['id']) ?>">
-                            <button type="submit" name="action" value="delete">Eliminar</button>
-                        </form>
-                    </td>
+                    <th>ID</th>
+                    <th>Correo</th>
+                    <th>Nombre</th>
+                    <th>Perfil</th>
+                    <th>Acciones</th>
                 </tr>
-            <?php endforeach; ?>
+            </thead>
+            <tbody>
+                <?php foreach ($usuarios as $usuario): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($usuario['id']) ?></td>
+                        <td><?= htmlspecialchars($usuario['email']) ?></td>
+                        <td><?= htmlspecialchars($usuario['name']) ?></td>
+                        <td><?= htmlspecialchars($usuario['role']) ?></td>
+                        <td>
+                            <form method="POST">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<?= htmlspecialchars($usuario['id']) ?>">
+                                <button type="submit" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
         </table>
 
         <h2>Agregar Usuario</h2>
-        <form method="POST" action="usuarios.php">
+        <form method="POST">
+            <input type="hidden" name="action" value="add">
             <label for="email">Correo:</label>
-            <input type="email" name="email" required>
+            <input type="email" name="email" required><br>
             <label for="name">Nombre:</label>
-            <input type="text" name="name" required>
+            <input type="text" name="name" required><br>
             <label for="password">Contraseña:</label>
-            <input type="password" name="password" required>
-            <label for="age">Edad:</label>
-            <input type="number" name="age" required>
+            <input type="password" name="password" required><br>
             <label for="role">Perfil:</label>
             <select name="role" required>
+                <option value="normal">Usuario</option>
                 <option value="admin">Administrador</option>
-                <option value="user">Usuario</option>
-            </select>
-            <button type="submit" name="action" value="add">Agregar Usuario</button>
+            </select><br>
+            <button type="submit">Agregar Usuario</button>
         </form>
-
-        <?php if (!empty($error)): ?>
-            <p class="error"><?= $error ?></p>
-        <?php elseif (!empty($success)): ?>
-            <p class="success"><?= $success ?></p>
-        <?php endif; ?>
     </main>
 </body>
 </html>

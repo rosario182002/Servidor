@@ -2,13 +2,8 @@
 session_start();
 include 'conexion.php';
 
-// Verificar si la conexión es exitosa
-if (!$conn) {
-    die("Error de conexión a la base de datos: " . mysqli_connect_error());
-}
-
-// Verificar si el usuario está logueado y no es administrador
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] === 'admin')) {
+// Verificar si el usuario está logueado
+if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
@@ -18,17 +13,18 @@ if (!isset($_SESSION['carrito'])) {
     $_SESSION['carrito'] = [];
 }
 
-// Función para obtener información de los productos en el carrito
-function obtenerProducto($idProducto) {
-    global $conn;
-    $sql = "SELECT * FROM productos WHERE id = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $idProducto);
-    mysqli_stmt_execute($stmt);
-    $resultado = mysqli_stmt_get_result($stmt);
-    return mysqli_fetch_assoc($resultado);  // Retorna los detalles del producto
+// Función para obtener información de un producto desde la base de datos
+function obtenerProducto($idProducto, $pdo) {
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM productos WHERE id = ?");
+        $stmt->execute([$idProducto]);
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $producto;
+    } catch (PDOException $e) {
+        echo "Error al obtener el producto: " . $e->getMessage();
+        return null;
+    }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -38,6 +34,21 @@ function obtenerProducto($idProducto) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrito de Compras</title>
     <link rel="stylesheet" href="./estilos/estilos.css">
+    <style>
+        .carrito-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .carrito-item img {
+            max-width: 80px;
+            height: auto;
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -47,19 +58,29 @@ function obtenerProducto($idProducto) {
         <h2>Productos en tu Carrito</h2>
         <?php if (!empty($_SESSION['carrito'])): ?>
             <ul>
-                <?php foreach ($_SESSION['carrito'] as $productoId): ?>
-                    <?php 
-                    $producto = obtenerProducto($productoId); // Obtener datos del producto de la base de datos
+                <?php
+                $total = 0; // Inicializar el total
+                foreach ($_SESSION['carrito'] as $productoId => $cantidad):
+                    $producto = obtenerProducto($productoId, $pdo);
                     if ($producto):
-                    ?>
-                        <li>
-                            <?= htmlspecialchars($producto['denominacion'], ENT_QUOTES, 'UTF-8') ?> - 
-                            <?= number_format($producto['precio'], 2) ?> USD
+                        $total += $producto['precio'] * $cantidad; // Sumar el precio al total
+                        $imagen = !empty($producto['imagen']) ? htmlspecialchars($producto['imagen']) : "imagenes/default.jpg";
+                        ?>
+                        <li class="carrito-item">
+                            <img src="<?= $imagen ?>" alt="Imagen de <?= htmlspecialchars($producto['denominacion']) ?>">
+                            <div>
+                                <?= htmlspecialchars($producto['denominacion'], ENT_QUOTES, 'UTF-8') ?> -
+                                <?= number_format($producto['precio'], 2) ?> USD
+                                (Cantidad: <?= $cantidad ?>)
+                            </div>
                             <a href="eliminarProducto.php?id=<?= htmlspecialchars($producto['id']) ?>">Eliminar</a>
                         </li>
+                    <?php else: ?>
+                        <p>Producto con ID <?= htmlspecialchars($productoId) ?> no encontrado.</p>
                     <?php endif; ?>
                 <?php endforeach; ?>
             </ul>
+            <p>Total: <?= number_format($total, 2) ?> USD</p> <!-- Mostrar el total -->
             <button>Finalizar compra</button>
         <?php else: ?>
             <p>Tu carrito está vacío.</p>
@@ -68,7 +89,3 @@ function obtenerProducto($idProducto) {
     </main>
 </body>
 </html>
-
-<?php
-mysqli_close($conn);  // Cerrar la conexión a la base de datos
-?>
